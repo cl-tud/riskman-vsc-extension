@@ -1,0 +1,101 @@
+{
+  "name": "riskman",
+  "displayName": "Riskman",
+  "description": "Conveniently verify whether all implementation manifests have been adressed.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.94.0"
+  },
+  "icon": "images/riskman.png",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:riskman"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "riskman.loadHTML",
+        "title": "Riskman: Load HTML"
+      },
+      {
+        "command": "riskman.loadRDF",
+        "title": "Riskman: Load RDF"
+      },
+      {
+        "command": "riskman.refreshEntry",
+        "title": "Riskman: Refresh entry",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "riskman.copyURI",
+        "title": "Copy URI",
+        "icon": "$(copy)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "riskman",
+          "title": "Riskman",
+          "icon": "images/riskman.png"
+        }
+      ]
+    },
+    "views": {
+      "riskman": [
+        {
+          "id": "im-explorer",
+          "name": "Implementation Manifests Explorer",
+          "type": "tree"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "riskman.refreshEntry",
+          "when": "view == im-explorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "riskman.copyURI",
+          "when": "view == im-explorer",
+          "group": "inline"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "im-explorer",
+        "contents": "No risk management file provided.\n[Load HTML](command:riskman.loadHTML)\n[Load RDF](command:riskman.loadRDF)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.9",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.13.0",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "rdflib": "^2.2.35"
+  }
+}
