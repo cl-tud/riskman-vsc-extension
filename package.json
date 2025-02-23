@@ -3,6 +3,7 @@
   "displayName": "Riskman",
   "description": "Conveniently verify whether all implementation manifests have been adressed.",
   "version": "0.0.1",
+  "publisher": "gorczyca",
   "repository": {
     "type": "git",
     "url": "https://github.com/cl-tud/riskman-vsc-extension.git"
