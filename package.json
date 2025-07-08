@@ -22,6 +22,18 @@
   "contributes": {
     "commands": [
       {
+        "command": "riskman.runInference",
+        "title": "Riskman: Run Inference"
+      },
+      {
+        "command": "riskman.validate",
+        "title": "Riskman: Validate"
+      },
+      {
+        "command": "riskman.loadGraph",
+        "title": "Riskman: Load Graph"
+      },
+      {
         "command": "riskman.loadHTML",
         "title": "Riskman: Load HTML"
       },
@@ -79,7 +91,20 @@
         "view": "im-explorer",
         "contents": "No risk management file provided.\n[Load HTML](command:riskman.loadHTML)\n[Load RDF](command:riskman.loadRDF)"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Riskman",
+      "properties": {
+        "riskman.nemoPath": {
+          "type": "string",
+          "description": "Path to the Nemo executable."
+        },
+        "riskman.pyshaclPath": {
+          "type": "string",
+          "description": "Path to the Pyshacl executable."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -92,16 +117,20 @@
   "devDependencies": {
     "@types/mocha": "^10.0.9",
     "@types/node": "20.x",
+    "@types/rdf-utils-fs": "^2.1.5",
+    "@types/rdf-validate-shacl": "^0.4.9",
     "@types/vscode": "^1.94.0",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.7.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "@zazuko/env-node": "^2.1.4",
     "eslint": "^9.13.0",
     "typescript": "^5.6.3"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
-    "rdflib": "^2.2.35"
+    "rdflib": "^2.2.35",
+    "vis-network": "^9.1.9"
   }
 }

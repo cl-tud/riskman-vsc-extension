@@ -1,0 +1,448 @@
+@prefix : <https://w3id.org/riskman/ontology#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org#> .
+@prefix riskman: <https://w3id.org/riskman/ontology#> .
+@prefix schema: <https://schema.org/> .
+@prefix rlevel: <https://w3id.org/riskman/ontology#> .
+@base <https://w3id.org/riskman/ontology#> .
+
+
+rlevel:gt rdf:type owl:ObjectProperty, owl:TransitiveProperty .
+
+#rlevel:p1
+rlevel:p1 rdf:type owl:NamedIndividual , riskman:Probability  .
+#rlevel:p2
+rlevel:p2 rdf:type owl:NamedIndividual , riskman:Probability  ;
+ rlevel:gt rlevel:p1 .
+#rlevel:p3
+rlevel:p3 rdf:type owl:NamedIndividual , riskman:Probability  ;
+ rlevel:gt rlevel:p2 .
+#rlevel:p4
+rlevel:p4 rdf:type owl:NamedIndividual , riskman:Probability  ;
+ rlevel:gt rlevel:p3 .
+#rlevel:p5
+rlevel:p5 rdf:type owl:NamedIndividual , riskman:Probability  ;
+ rlevel:gt rlevel:p4 .
+
+
+#rlevel:s1
+rlevel:s1 rdf:type owl:NamedIndividual , riskman:Severity  .
+#rlevel:s2
+rlevel:s2 rdf:type owl:NamedIndividual , riskman:Severity  ;
+ rlevel:gt rlevel:s1 .
+#rlevel:s3
+rlevel:s3 rdf:type owl:NamedIndividual , riskman:Severity  ;
+ rlevel:gt rlevel:s2 .
+#rlevel:s4
+rlevel:s4 rdf:type owl:NamedIndividual , riskman:Severity  ;
+ rlevel:gt rlevel:s3 .
+#rlevel:s5
+rlevel:s5 rdf:type owl:NamedIndividual , riskman:Severity  ;
+ rlevel:gt rlevel:s4 .
+
+
+#1 x 1 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#1 x 2 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#1 x 3 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#1 x 4 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#1 x 5 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#2 x 1 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#2 x 2 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#2 x 3 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#2 x 4 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#2 x 5 = 2
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+] .
+
+#3 x 1 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#3 x 2 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#3 x 3 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#3 x 4 = 2
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+] .
+
+#3 x 5 = 3
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+] .
+
+#4 x 1 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#4 x 2 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#4 x 3 = 2
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+] .
+
+#4 x 4 = 3
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+] .
+
+#4 x 5 = 4
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+] .
+
+#5 x 1 = 1
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p1 ) ]
+] .
+
+#5 x 2 = 2
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p2 ) ]
+] .
+
+#5 x 3 = 3
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p3 ) ]
+] .
+
+#5 x 4 = 4
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p4 ) ]
+] .
+
+#5 x 5 = 5
+[ owl:intersectionOf ( [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability1 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                       [ rdf:type owl:Restriction ;
+                         owl:onProperty riskman:hasProbability2 ;
+                         owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+                       ]
+                     ) ;
+                ]                     
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+                    owl:onProperty riskman:hasProbability ;
+                    owl:someValuesFrom [ owl:oneOf ( rlevel:p5 ) ]
+] .
+
+

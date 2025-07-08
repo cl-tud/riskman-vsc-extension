@@ -3,18 +3,24 @@ import * as fs from 'fs'
 import * as cheerio from 'cheerio'
 import { ObjectType } from 'rdflib/lib/types'
 
+// import { Statement } from 'rdflib'
+
 import * as vscode from 'vscode'
 
 import { ImplementationManifest } from './ImplementationManifestTreeDataProvider'
+import { VisEdge, VisGraph, VisNode } from './VisJsClasses'
 
 
-const DEFAULT_URI = 'http://example.org#'
+import { NAMESPACES } from './Namespaces'
 
-const RDFS_NAMESPACE = rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#')
+const DEFAULT_URI = NAMESPACES['ex']
+
+const RDFS_NAMESPACE = rdf.Namespace(NAMESPACES['rdfs'])
+
 const RDFS_LABEL = RDFS_NAMESPACE('label')
 
 
-const RISKMAN_ONTOLOGY_URI = 'https://w3id.org/riskman/ontology#'
+const RISKMAN_ONTOLOGY_URI = NAMESPACES['riskman']
 const RISKMAN_ONTOLOGY_NAMESPACE = rdf.Namespace(RISKMAN_ONTOLOGY_URI)
 const hasImplementationManifestUri = RISKMAN_ONTOLOGY_NAMESPACE('hasImplementationManifest')
 
@@ -34,9 +40,7 @@ function getLabel(object: any, rdfStore: rdf.Store) {
 
 }
 
-
-
-export function extractImplementationManifests(rdfaAbsolutePath: string, fileType: string) {
+export function getRdfGraph(rdfaAbsolutePath: string, fileType: string): rdf.Store {
 
     const rdfGraph = rdf.graph()
     
@@ -54,8 +58,53 @@ export function extractImplementationManifests(rdfaAbsolutePath: string, fileTyp
         console.warn(`No base URI found, using ${DEFAULT_URI} instead.`)
     }
 
-    rdf.parse(fileContentString, rdfGraph, baseURI, fileType);
+    rdf.parse(fileContentString, rdfGraph, baseURI, fileType)
 
+    return rdfGraph
+}
+
+function removeDuplicates(list: any[], properties: any[], initialList: any[] = []) {
+    const seen = new Set()
+    initialList.forEach(item => {
+        const key = properties.map(prop => item[prop]).join('::')
+        seen.add(key)
+    })
+
+    return list.filter(item => {
+
+        const key = properties.map(prop => item[prop]).join('::') // create a unique key
+        if (seen.has(key)) {
+            return false
+        }
+        seen.add(key)
+        return true
+
+    })
+
+}
+
+export function getDatagraph(graph: rdf.Store, initialStatements: rdf.Statement[] = []): VisGraph {
+
+    // get all controlled risks, and then recusrively all triples, exhaustively that lead from/to controlled risks and forwards
+    
+    // controlled risks
+    // const rdfGraph =  getRdfGraph(rdfaAbsolutePath, fileType)
+    //
+    const relevantStatements = graph.statements.filter(triple => triple.predicate.value.startsWith(RISKMAN_ONTOLOGY_URI))
+    
+    const visNodes = relevantStatements.flatMap(t => [t.subject, t.object]).map(node => new VisNode(node, graph))
+    const visEdges = relevantStatements.map(statement => new VisEdge(statement, graph))
+    return new VisGraph(
+        removeDuplicates(visNodes, ['id'], initialStatements.flatMap(t => [t.subject, t.object]).map(node => new VisNode(node, graph))), 
+        removeDuplicates(visEdges, ['from','to','code'], initialStatements.map(statement => new VisEdge(statement, graph)))
+    )
+    //relevantStatements]
+}
+
+
+export function extractImplementationManifests(rdfaAbsolutePath: string, fileType: string) {
+
+    let rdfGraph = getRdfGraph(rdfaAbsolutePath, fileType)
     // return rdfGraph
     const implementationManifests: ImplementationManifest[] = rdfGraph.statementsMatching(undefined, hasImplementationManifestUri, undefined).map((s) => toImplementationManifest(s.object, rdfGraph))
     

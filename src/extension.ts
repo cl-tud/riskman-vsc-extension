@@ -6,10 +6,19 @@ import * as vscode from 'vscode';
 import * as fsp from 'fs/promises'
 import * as fs from 'fs'
 import * as readline from 'readline'
+import * as rdf from 'rdflib'
 
 import * as path from 'path'
 
-import { ImplementationManifestTreeDataProvider } from './ImplementationManifestTreeDataProvider';
+import { ImplementationManifestTreeDataProvider } from './ImplementationManifestTreeDataProvider'
+
+import { GraphPanel } from './GraphPanel'
+
+import { getDatagraph, getRdfGraph  } from './rdfReader'
+
+import { runBashScript } from './reasoningService';
+
+import { validate } from './validationService';
 
 
 
@@ -52,7 +61,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	let rdfFilePath: string | undefined = undefined
 	let rdfFileType: string | undefined = undefined
+	let rdfGraph: rdf.Store | undefined = undefined
 	let imTreeDataProvider: ImplementationManifestTreeDataProvider | undefined = undefined
+
 
 	let workspaceImplementationManifests: { [id: string]: [string, number, number] } = {}
 
@@ -92,7 +103,62 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	///////////////////////////
 
-	function loadRdfDialog(fileType: string) {
+	function proceedWithImplementationManifests(fileUris: vscode.Uri[] | undefined, fileType: string) {
+		if (fileUris && fileUris[0]) {
+
+			rdfFilePath = fileUris[0].fsPath
+			rdfFileType = fileType
+			imTreeDataProvider = new ImplementationManifestTreeDataProvider(rdfFilePath, rdfFileType, workspaceImplementationManifests)
+
+			// trigger checks
+			onAnyChange()
+
+			vscode.window.registerTreeDataProvider('im-explorer', imTreeDataProvider!)
+
+			const tree = vscode.window.createTreeView('im-explorer', { showCollapseAll: false, treeDataProvider: imTreeDataProvider })
+
+
+			tree.onDidChangeSelection(e => {
+				if (e.selection.length > 0 && e.selection[0].foundIn) {
+
+					const foundIn = e.selection[0].foundIn
+
+					// point to where it is implemented
+					const position = new vscode.Position(foundIn[1] - 1, foundIn[2])
+					const position2 = new vscode.Position(foundIn[1] - 1, foundIn[2] + e.selection[0].uri.length + 1) // lineNumber is 1-based, so subtract 1
+
+					const range = new vscode.Range(position, position2);
+					vscode.window.showTextDocument(vscode.Uri.file(foundIn[0]), { selection: range })
+
+
+				}
+			});
+		}
+	}
+
+	// 
+	function proceedWithGraph(fileUris: vscode.Uri[] | undefined, fileType: string) {
+
+		if (fileUris && fileUris[0]) {
+
+			rdfFilePath = fileUris[0].fsPath
+			rdfFileType = fileType
+
+			rdfGraph = getRdfGraph(rdfFilePath, rdfFileType)
+
+			const visGraph = getDatagraph(rdfGraph)
+
+			GraphPanel.createOrShow(context.extensionUri, visGraph)
+
+			// save statements to a file for reasoning
+			// saveStatements(context.extensionUri, statements)
+		}
+
+
+	}
+
+	// TODO: this should instead take as an argument a callback that takes a nullable RdfGraph as argument and then callbacks can do something with it
+	function loadRdfDialog(fileType: string, callback: (fileUris: vscode.Uri[] | undefined, fileType: string) => void) {
 
 		const HTMLOptions: vscode.OpenDialogOptions = {
 			canSelectMany: false,
@@ -115,44 +181,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		const options = fileType == 'text/html' ? HTMLOptions : TurtleOptions
 
 		return () => {
-			vscode.window.showOpenDialog(options).then(fileUri => {
-				if (fileUri && fileUri[0]) {
-
-					rdfFilePath = fileUri[0].fsPath
-					rdfFileType = fileType
-					imTreeDataProvider = new ImplementationManifestTreeDataProvider(rdfFilePath, rdfFileType, workspaceImplementationManifests)
-
-					// trigger checks
-					onAnyChange()
-
-					vscode.window.registerTreeDataProvider('im-explorer', imTreeDataProvider!)
-
-					const tree = vscode.window.createTreeView('im-explorer', { showCollapseAll: false, treeDataProvider: imTreeDataProvider })
-
-
-					tree.onDidChangeSelection(e => {
-						if (e.selection.length > 0 && e.selection[0].foundIn) {
-
-							const foundIn = e.selection[0].foundIn
-
-							// point to where it is implemented
-							const position = new vscode.Position(foundIn[1] - 1, foundIn[2])
-							const position2 = new vscode.Position(foundIn[1] - 1, foundIn[2] + e.selection[0].uri.length + 1) // lineNumber is 1-based, so subtract 1
-
-							const range = new vscode.Range(position, position2);
-							vscode.window.showTextDocument(vscode.Uri.file(foundIn[0]), { selection: range })
-
-
-						}
-					});
-				}
-			})
+			vscode.window.showOpenDialog(options).then(fileUri => callback(fileUri, fileType))
 		}
 
 	}
 
-	const loadHtml = vscode.commands.registerCommand('riskman.loadHTML', loadRdfDialog('text/html'))
-	const loadRDF = vscode.commands.registerCommand('riskman.loadRDF', loadRdfDialog('text/turtle'))
+	const loadHtml = vscode.commands.registerCommand('riskman.loadHTML', loadRdfDialog('text/html', proceedWithImplementationManifests))
+	const loadRDF = vscode.commands.registerCommand('riskman.loadRDF', loadRdfDialog('text/turtle', proceedWithImplementationManifests))
 
 
 	context.subscriptions.push(loadHtml)
@@ -168,7 +203,61 @@ export async function activate(context: vscode.ExtensionContext) {
 	})
 
 
+	// test command
+	vscode.commands.registerCommand('riskman.runInference', () => {
+		if(rdfGraph) {
+			const inferredStore = runBashScript(context.extensionUri, rdfGraph)
+
+			const newVisGraph = getDatagraph(inferredStore, rdfGraph.statements)
+
+			inferredStore.statements.forEach(st => {
+				rdfGraph?.add(st.subject, st.predicate, st.object)
+			})
+
+			GraphPanel.message({
+				type: 'infer',
+				data: newVisGraph
+			})
 
 
+		}
+	})
+
+
+	// TODO: move this to another file
+
+
+	//
+	const loadGraph = vscode.commands.registerCommand('riskman.loadGraph', loadRdfDialog('text/html', proceedWithGraph))
+	// const loadGraph = vscode.commands.registerCommand('riskman.loadGraph', () => {
+		// temporary fix the input file
+		// const fileURI = `/home/piotr/Dresden/riskman-vscode-extension/risk-documentations/submission_giip_large.html`
+		// const fileURI = `/home/piotr/Dresden/riskman-vscode-extension/risk-documentations/submission_giip_4_residual_prob.html`
+		// proceedWithGraph([vscode.Uri.file(fileURI)], 'text/html')
+	// })
+
+
+	context.subscriptions.push(loadGraph)
+
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('riskman.validate', () => {
+			let validationResults = validate(context.extensionUri)
+
+			GraphPanel.message({
+				type: 'validate',
+				data: validationResults
+			})
+
+			if(validationResults.length > 0) {
+				let validationMessage = validationResults.map(res => `Node: ${res.focusNode}\nError:${res.message}`).join('\n')
+
+				vscode.window.showErrorMessage(`Validation unsuccessful. ${validationMessage}`);
+			} else {
+				vscode.window.showInformationMessage(`Validation successful.`);
+			}
+			
+		})
+	)
 
 }
