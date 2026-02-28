@@ -18,14 +18,14 @@ A VSCode extension for visualizing, reasoning over, and validating RDF-based ris
 
 | Setting | Description |
 |---|---|
-| `riskman.reasonerCommand` | Command to run the OWL reasoner. Use `{input}` and `{output}` as placeholders. Example with HermiT via realization-wrapper: `java -jar /path/to/realization-wrapper.jar {input} {output}` |
+| `riskman.reasonerCommand` | Command to run the OWL reasoner. Use `{input}` and `{output}` as placeholders. Example with HermiT via realization-wrapper: `java -jar /path/to/realization-wrapper-hermit-jfact-1.1.jar {input} {output} hermit` |
 | `riskman.pyshaclPath` | Path to the `pyshacl` executable |
 
 ## Usage
 
 ### Typical workflow
 
-1. **Riskman: Load Graph** — open a risk document (HTML with embedded RDFa, or Turtle `.ttl`)
+1. **Riskman: Extract RDF Graph** — load the active editor file into the graph panel (or use **Riskman: Load Graph** to pick a file via dialog)
 
 ![Extract RDF Graph](gifs/gif-1.gif)
 
@@ -37,7 +37,6 @@ A VSCode extension for visualizing, reasoning over, and validating RDF-based ris
 
 ![Validate](gifs/gif-3.gif)
 
-4. Run **Load Graph** again at any time to reset and load a different document
 
 ### Implementation manifest checking
 
