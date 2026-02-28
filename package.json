@@ -16,7 +16,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:riskman"
+    "onView:riskman",
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -32,6 +33,10 @@
       {
         "command": "riskman.loadGraph",
         "title": "Riskman: Load Graph"
+      },
+      {
+        "command": "riskman.extractGraph",
+        "title": "Riskman: Extract RDF Graph"
       },
       {
         "command": "riskman.loadHTML",
@@ -64,6 +69,10 @@
     "views": {
       "riskman": [
         {
+          "id": "graph-view",
+          "name": "Graph View"
+        },
+        {
           "id": "im-explorer",
           "name": "Implementation Manifests Explorer",
           "type": "tree"
@@ -90,14 +99,18 @@
       {
         "view": "im-explorer",
         "contents": "No risk management file provided.\n[Load HTML](command:riskman.loadHTML)\n[Load RDF](command:riskman.loadRDF)"
+      },
+      {
+        "view": "graph-view",
+        "contents": "[Load graph](command:riskman.loadGraph)\n[Reason](command:riskman.runInference)\n[Verify](command:riskman.validate)"
       }
     ],
     "configuration": {
       "title": "Riskman",
       "properties": {
-        "riskman.nemoPath": {
+        "riskman.reasonerCommand": {
           "type": "string",
-          "description": "Path to the Nemo executable."
+          "description": "Command to run the reasoner. Use {input} and {output} as placeholders for the input and output file paths. Example: java -jar /path/to/reasoner.jar {input} {output}"
         },
         "riskman.pyshaclPath": {
           "type": "string",

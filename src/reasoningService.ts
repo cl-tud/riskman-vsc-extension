@@ -9,23 +9,10 @@ import * as rdf from 'rdflib'
 import * as fs from 'fs'
 
 import { getRdfGraph } from './rdfReader'
+import { output } from 'rdflib/lib/utils-js'
 
-const initPath = 'total-triples.ttl'
-export const triplesAfterInferencePath = 'triples-inference.ttl'
-const nemoInput = 'nemo-input.rls'
-
-// export function saveStatements(extensionUri: vscode.Uri, rdfStore: rdf.Store) {
-//     // const tmpStore = rdf.graph()
-
-//     const outputPath = vscode.Uri.joinPath(extensionUri, 'nmo', initPath)
-
-//     statements.forEach(st => tmpStore.add(st.subject, st.predicate, st.object))
-//     const turtleData = rdf.serialize(null, tmpStore, 'text/turtle')
-
-//     if(turtleData) {
-//         fs.writeFileSync(outputPath.path, turtleData)
-//     }
-// }
+const inputPath = 'input-triples.ttl'
+export const outputPath = 'output-triples.ttl'
 
 function save(graph: rdf.Store, path: string) {
     const turtleData = rdf.serialize(null, graph, null, 'text/turtle')
@@ -37,64 +24,112 @@ function save(graph: rdf.Store, path: string) {
 
 export function runBashScript(extensionUri: vscode.Uri, rdfStore: rdf.Store) {
 
+
     const totalGraph = rdf.graph()
     rdfStore.statements.forEach(st => {
         totalGraph.add(st.subject, st.predicate, st.object)
     })
 
-    // TODO: temporary comment it out 
-    // read store with the riskman ontology
-    const riskmanOntology = vscode.Uri.joinPath(extensionUri, 'nmo', 'riskman-ontology.ttl')
+    // read store with the riskman ontology, add it to the total graph
+    const riskmanOntology = vscode.Uri.joinPath(extensionUri, 'reasoning', 'riskman-ontology.ttl')
     const riskmanOntologyStore = getRdfGraph(riskmanOntology.path, 'text/turtle')
     riskmanOntologyStore.statements.forEach(st => {
         totalGraph.add(st.subject, st.predicate, st.object)
     })
 
-    // read store with the probability-severity ontology
-    const probSevOntology = vscode.Uri.joinPath(extensionUri, 'nmo', 'prob5-sev5.ttl')
+    // read store with the probability-severity ontology, add it to the total graph
+    const probSevOntology = vscode.Uri.joinPath(extensionUri, 'reasoning', 'prob5-sev5.ttl')
     const probSevOntologyStore = getRdfGraph(probSevOntology.path, 'text/turtle')
     probSevOntologyStore.statements.forEach(st => {
         totalGraph.add(st.subject, st.predicate, st.object)
     })
 
-    const outputPath = vscode.Uri.joinPath(extensionUri, 'nmo', initPath)
+    const inputPathFull = vscode.Uri.joinPath(extensionUri, 'reasoning', inputPath)
+    const outputPathFull = vscode.Uri.joinPath(extensionUri, 'reasoning', outputPath)
 
-    save(totalGraph, outputPath.path)
-
-    const nemoRulesPath = vscode.Uri.joinPath(extensionUri, 'nmo', 'rules.rls')
-    const rulesFileContents = fs.readFileSync(nemoRulesPath.path, 'utf8')
-
-    const lineToAppend = `@import TRIPLE :- turtle { resource = "${outputPath.path}" } .`
-    const updatedContent = lineToAppend + '\n' + rulesFileContents
-
-    const nemoInputFilePath = vscode.Uri.joinPath(extensionUri, 'nmo', nemoInput)
-    fs.writeFileSync(nemoInputFilePath.path, updatedContent, 'utf8')
+    // save the temporary file
+    save(totalGraph, inputPathFull.path)
 
     // run bash script
-    const config = vscode.workspace.getConfiguration('riskman');
+    const config = vscode.workspace.getConfiguration('riskman')
 
-    const nmoOutputPath = vscode.Uri.joinPath(extensionUri, 'nmo')
+    const rawCommand = (config.reasonerCommand as string)
+        .replace('{input}', inputPathFull.path)
+        .replace('{output}', outputPathFull.path)
+    const [cmd, ...args] = rawCommand.split(/\s+/)
+    const result = spawnSync(cmd, args, { encoding: 'utf-8' });
 
-    // ./nmo epic-rules-hardcoded.rls --overwrite-results --export-dir /home/piotr/Dresden/riskman-vscode-extension/riskman/nmo
-    const command = `${config.nemoPath} ${nemoInputFilePath.path} --overwrite-results --export-dir ${nmoOutputPath.path}`
 
-    const result = spawnSync(config.nemoPath, [
-        nemoInputFilePath.path,
-        '--overwrite-results',
-        '--export-dir',
-        nmoOutputPath.path
-    ], { encoding: 'utf-8' });
 
-    const nmoOutputFile = vscode.Uri.joinPath(extensionUri, 'nmo', 'inferProbability.ttl')
-    const inferredStore = getRdfGraph(nmoOutputFile.path, 'text/turtle')
+    const inferredStore = getRdfGraph(outputPathFull.path, 'text/turtle')
 
-    inferredStore.statements.forEach(st => {
-        totalGraph.add(st.subject, st.predicate, st.object)
+    const riskman = rdf.Namespace(NAMESPACES['riskman'])
+    const rdfN = rdf.Namespace(NAMESPACES['rdf'])
+
+    const allowedProps = [
+        riskman('hasProbability'),
+        riskman('hasProbability1'),
+        riskman('hasProbability2'),
+        riskman('hasSeverity')
+    ]
+
+
+    //
+
+    const totalDataGraph = rdf.graph()
+    rdfStore.statements.forEach(st => {
+        totalDataGraph.add(st.subject, st.predicate, st.object)
     })
 
-    const finalOutputPath = vscode.Uri.joinPath(extensionUri, 'nmo', triplesAfterInferencePath)
-    save(totalGraph, finalOutputPath.path)
 
-    return inferredStore
+
+    // filter out probabilities and severities that are not relevant
+    inferredStore.statements.forEach(st => {
+
+
+        // -------------------------------------------
+        // If triple is: X rdf:type Probability|Severity
+        // -------------------------------------------
+        const isProbSevType =
+            st.predicate.equals(rdfN('type')) &&
+            (st.object.equals(riskman('Probability')) || st.object.equals(riskman('Severity')));
+
+        if (isProbSevType) {
+            // Keep this type triple only if there's a connection:
+            // something --allowedProp--> X
+            const hasAllowedConnection = inferredStore.match(null, null, st.subject)
+                .some(conn => allowedProps.some(p => conn.predicate.equals(p)));
+
+            if (!hasAllowedConnection) {
+                // console.log(st)
+                return;
+            } // skip this type triple
+        } else {
+
+            // -------------------------------------------
+            // If triple: subj pred obj,
+            // and subj is of type Probability|Severity,
+            // keep only if predicate is allowed
+            // -------------------------------------------
+            const subjTypes = inferredStore.match(st.subject, rdfN('type'), null);
+            const subjIsProbSev = subjTypes.some(t =>
+                t.object.equals(riskman('Probability')) || t.object.equals(riskman('Severity'))
+            );
+
+            if (subjIsProbSev && !allowedProps.some(p => st.predicate.equals(p))) {
+                // console.log(st)
+                return; // skip this triple
+            }
+
+        }
+        // -------------------------------------------
+        // Otherwise: keep the triple
+        // -------------------------------------------
+        totalDataGraph.add(st.subject, st.predicate, st.object);
+    });
+
+
+    // debugger
+    return totalDataGraph
 
 }

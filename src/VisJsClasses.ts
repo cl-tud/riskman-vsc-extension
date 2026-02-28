@@ -26,8 +26,15 @@ function getObject(subject: Term, rdfGraph: rdf.Store, predicateUri: NamedNode) 
     // TODO: this type casting is ugly
     const matches = rdfGraph.match(subject as NamedNode | rdf.BlankNode | rdf.Variable, predicateUri, null); // Match subject and predicate
 
+    // filter out owl thing and owl named individual
+
     // debugger
-    return matches.map(x => x.object)
+    const owl = rdf.Namespace(NAMESPACES['owl'])
+
+
+    return matches.map(x => x.object).filter(x => 
+        !([owl('Thing').value, owl('NamedIndividual').value].includes(x.value))
+    )
     // return matches.length > 0 ? matches[0].object : undefined; // Ret
 }
 

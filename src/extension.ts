@@ -14,11 +14,12 @@ import { ImplementationManifestTreeDataProvider } from './ImplementationManifest
 
 import { GraphPanel } from './GraphPanel'
 
-import { getDatagraph, getRdfGraph  } from './rdfReader'
+import { getRdfGraph, createDatagraph, getUpdatedDatagraph } from './rdfReader'
 
 import { runBashScript } from './reasoningService';
 
 import { validate } from './validationService';
+import { VisGraph } from './VisJsClasses';
 
 
 
@@ -54,15 +55,22 @@ async function getWorkspaceImplementationManifests(workspacePath: string): Promi
 	}
 
 	return dict
+
+	
 }
 
 
 export async function activate(context: vscode.ExtensionContext) {
 
+	// console.log('activate')
+	// throw new Error()
+
 	let rdfFilePath: string | undefined = undefined
 	let rdfFileType: string | undefined = undefined
 	let rdfGraph: rdf.Store | undefined = undefined
 	let imTreeDataProvider: ImplementationManifestTreeDataProvider | undefined = undefined
+
+	let visGraph: VisGraph | undefined = undefined
 
 
 	let workspaceImplementationManifests: { [id: string]: [string, number, number] } = {}
@@ -92,14 +100,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	}
 
-	const watcher = vscode.workspace.createFileSystemWatcher('**/*')
+	// const watcher = vscode.workspace.createFileSystemWatcher('**/*')
 
 
-	watcher.onDidChange(onAnyChange)
-	watcher.onDidCreate(onAnyChange)
-	watcher.onDidDelete(onAnyChange)
+	// watcher.onDidChange(onAnyChange)
+	// watcher.onDidCreate(onAnyChange)
+	// watcher.onDidDelete(onAnyChange)
 
-	context.subscriptions.push(watcher)
+	// context.subscriptions.push(watcher)
 
 	///////////////////////////
 
@@ -141,14 +149,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (fileUris && fileUris[0]) {
 
+			console.log('proceedWithGraph called with', fileUris[0].fsPath)
+
 			rdfFilePath = fileUris[0].fsPath
 			rdfFileType = fileType
 
 			rdfGraph = getRdfGraph(rdfFilePath, rdfFileType)
 
-			const visGraph = getDatagraph(rdfGraph)
+			const graph = createDatagraph(rdfGraph)
+			visGraph = graph
 
-			GraphPanel.createOrShow(context.extensionUri, visGraph)
+			GraphPanel.createOrShow(context.extensionUri, graph)
 
 			// save statements to a file for reasoning
 			// saveStatements(context.extensionUri, statements)
@@ -205,18 +216,19 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// test command
 	vscode.commands.registerCommand('riskman.runInference', () => {
-		if(rdfGraph) {
+		if (rdfGraph && visGraph) {
 			const inferredStore = runBashScript(context.extensionUri, rdfGraph)
+			const { diffGraph, intersectionGraph } = getUpdatedDatagraph(inferredStore, visGraph)
 
-			const newVisGraph = getDatagraph(inferredStore, rdfGraph.statements)
+			// inferredStore.statements.forEach(st => {
+			// rdfGraph?.add(st.subject, st.predicate, st.object)
+			// })   // what is this for?
 
-			inferredStore.statements.forEach(st => {
-				rdfGraph?.add(st.subject, st.predicate, st.object)
-			})
+			rdfGraph = inferredStore
 
 			GraphPanel.message({
 				type: 'infer',
-				data: newVisGraph
+				data: { diffGraph, intersectionGraph }
 			})
 
 
@@ -226,37 +238,54 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// TODO: move this to another file
 
+	const extract = vscode.commands.registerCommand('riskman.extractGraph', () => {
+		console.log('worked')
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			proceedWithGraph([editor.document.uri], 'text/html')
+			// use uri
+		}
+	})
+	context.subscriptions.push(extract)
+
 
 	//
 	const loadGraph = vscode.commands.registerCommand('riskman.loadGraph', loadRdfDialog('text/html', proceedWithGraph))
 	// const loadGraph = vscode.commands.registerCommand('riskman.loadGraph', () => {
-		// temporary fix the input file
-		// const fileURI = `/home/piotr/Dresden/riskman-vscode-extension/risk-documentations/submission_giip_large.html`
-		// const fileURI = `/home/piotr/Dresden/riskman-vscode-extension/risk-documentations/submission_giip_4_residual_prob.html`
-		// proceedWithGraph([vscode.Uri.file(fileURI)], 'text/html')
+	// temporary fix the input file
+	// const fileURI = `/home/piotr/Dresden/riskman-vscode-extension/risk-documentations/submission_giip_large.html`
+	// const fileURI = `/home/piotr/Dresden/riskman-vscode-extension/risk-documentations/submission_giip_4_residual_prob.html`
+	// proceedWithGraph([vscode.Uri.file(fileURI)], 'text/html')
 	// })
 
 
 	context.subscriptions.push(loadGraph)
 
 
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('riskman.validate', () => {
 			let validationResults = validate(context.extensionUri)
+
+			// debugger
 
 			GraphPanel.message({
 				type: 'validate',
 				data: validationResults
 			})
 
-			if(validationResults.length > 0) {
-				let validationMessage = validationResults.map(res => `Node: ${res.focusNode}\nError:${res.message}`).join('\n')
+			if (validationResults.length > 0) {
+				let validationMessage = validationResults.map(res => 
+					// `Node: ${res.focusNode}\n
+					// Error:${res.message}`).join('\n\n')
+					res.message
+				)
 
 				vscode.window.showErrorMessage(`Validation unsuccessful. ${validationMessage}`);
 			} else {
 				vscode.window.showInformationMessage(`Validation successful.`);
 			}
-			
+
 		})
 	)
 

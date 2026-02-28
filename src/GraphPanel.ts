@@ -28,13 +28,13 @@ export class GraphPanel {
             ? vscode.window.activeTextEditor.viewColumn
             : undefined
 
-        // If panel already exists, show it
+        // If panel already exists, dispose it to get a clean slate
         if (GraphPanel.currentPanel) {
-            GraphPanel.currentPanel._panel.reveal(column)
-            return
+            GraphPanel.currentPanel._panel.dispose()
+            GraphPanel.currentPanel = undefined
         }
 
-        // Otherwise, create a new panel
+        // Create a new panel
         const panel = vscode.window.createWebviewPanel(
             GraphPanel.viewType,
             GraphPanel.title,
@@ -173,7 +173,7 @@ export class GraphPanel {
                         // hierarchicalRepulsion: {
                             // avoidOverlap: 1
                         // },
-                        wind: { x: 1, y: 0 },
+                        // wind: { x: 1, y: 0 },
                         barnesHut: {
                             gravitationalConstant: -20000,
                             springLength: 95,
@@ -204,13 +204,23 @@ export class GraphPanel {
                     let eventData = event.data.data
                     console.log(eventData)
                     if (event.data.type === 'infer') {
-                        eventData.nodes.forEach(node =>
-                            nodes.add(node)
-                        )
-                        eventData.edges.forEach(edge =>
-                            edges.add(edge)
-                        )
+
+
+                        // UPDATE existing
+                        nodes.update(eventData.intersectionGraph.nodes)
+                        // edges.update(eventData.intersectionGraph.edges)
+                    
+                        // ADD new
+                        eventData.diffGraph.nodes.forEach(node => nodes.add(node))
+                        eventData.diffGraph.edges.forEach(edge => edges.add(edge))
+                        
                     } else if (event.data.type === 'validate') {
+
+                        // debugger
+
+                        console.log('im here')
+
+
                         eventData.forEach(res => {
                             nodes.update({
                                 id: res.focusNode,

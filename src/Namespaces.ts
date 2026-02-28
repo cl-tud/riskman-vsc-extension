@@ -4,5 +4,6 @@ export const NAMESPACES = {
     'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
     'riskman': 'https://w3id.org/riskman/ontology#',
     'foo': 'http://foo.com/',
-    'sh': 'http://www.w3.org/ns/shacl#'
+    'sh': 'http://www.w3.org/ns/shacl#',
+    'owl': 'http://www.w3.org/2002/07/owl#'
 }

@@ -43,15 +43,15 @@ function getLabel(object: any, rdfStore: rdf.Store) {
 export function getRdfGraph(rdfaAbsolutePath: string, fileType: string): rdf.Store {
 
     const rdfGraph = rdf.graph()
-    
+
     const fileContentString = fs.readFileSync(rdfaAbsolutePath).toString()
 
-    let baseURI = DEFAULT_URI 
+    let baseURI = DEFAULT_URI
     if (fileType == 'text/html') {
         baseURI = cheerio.load(fileContentString)('base').attr('href') || DEFAULT_URI
     } else {
         const baseUriMatch = fileContentString.match(/@base\s+<([^>]+)>|BASE\s+<([^>]+)>/i)
-        baseURI = baseUriMatch ? baseUriMatch[1] || baseUriMatch[2] : DEFAULT_URI 
+        baseURI = baseUriMatch ? baseUriMatch[1] || baseUriMatch[2] : DEFAULT_URI
     }
 
     if (baseURI == DEFAULT_URI) {
@@ -65,50 +65,88 @@ export function getRdfGraph(rdfaAbsolutePath: string, fileType: string): rdf.Sto
 
 function removeDuplicates(list: any[], properties: any[], initialList: any[] = []) {
     const seen = new Set()
-    initialList.forEach(item => {
-        const key = properties.map(prop => item[prop]).join('::')
-        seen.add(key)
-    })
 
     return list.filter(item => {
-
         const key = properties.map(prop => item[prop]).join('::') // create a unique key
-        if (seen.has(key)) {
-            return false
-        }
-        seen.add(key)
-        return true
 
+        if (seen.has(key)) {
+            // skip
+            return false
+        } else {
+            seen.add(key)
+            return true
+        }
     })
+}
+
+export function createDatagraph(graph: rdf.Store): VisGraph {
+
+    const relevantStatements = graph.statements.filter(triple => triple.predicate.value.startsWith(RISKMAN_ONTOLOGY_URI))
+
+    const visNodes = relevantStatements.flatMap(t => [t.subject, t.object]).map(node => new VisNode(node, graph))
+    const visEdges = relevantStatements.map(statement => new VisEdge(statement, graph))
+
+    return new VisGraph(
+        removeDuplicates(visNodes, ['id']),
+        removeDuplicates(visEdges, ['from', 'to', 'code'])
+    )
 
 }
 
-export function getDatagraph(graph: rdf.Store, initialStatements: rdf.Statement[] = []): VisGraph {
 
-    // get all controlled risks, and then recusrively all triples, exhaustively that lead from/to controlled risks and forwards
-    
-    // controlled risks
-    // const rdfGraph =  getRdfGraph(rdfaAbsolutePath, fileType)
-    //
-    const relevantStatements = graph.statements.filter(triple => triple.predicate.value.startsWith(RISKMAN_ONTOLOGY_URI))
-    
-    const visNodes = relevantStatements.flatMap(t => [t.subject, t.object]).map(node => new VisNode(node, graph))
-    const visEdges = relevantStatements.map(statement => new VisEdge(statement, graph))
-    return new VisGraph(
-        removeDuplicates(visNodes, ['id'], initialStatements.flatMap(t => [t.subject, t.object]).map(node => new VisNode(node, graph))), 
-        removeDuplicates(visEdges, ['from','to','code'], initialStatements.map(statement => new VisEdge(statement, graph)))
+function getIntersectionAndDifference(
+    supersetList: any[],
+    subsetList: any[],
+    properties: string[]
+) {
+    const subsetKeys = new Set(
+        subsetList.map(item => properties.map(p => item[p]).join('::'))
+    );
+
+    const intersection = supersetList.filter(item => {
+        const key = properties.map(p => item[p]).join('::')
+        return subsetKeys.has(key)
+    });
+
+    const difference = supersetList.filter(item => {
+        const key = properties.map(p => item[p]).join('::')
+        return !subsetKeys.has(key)
+    });
+
+    return { intersection, difference }
+}
+
+
+export function getUpdatedDatagraph(inferredStore: rdf.Store, currentGraph: VisGraph) {
+
+
+    // debugger
+
+    const newDatagraph = createDatagraph(inferredStore)
+
+    const { intersection: edgeIntersection, difference: edgeDifference } = getIntersectionAndDifference(
+        newDatagraph.edges,
+        currentGraph.edges,
+        ['from', 'to', 'code']
     )
-    //relevantStatements]
+
+    const { intersection: nodeIntersection, difference: nodeDifference } = getIntersectionAndDifference(
+        newDatagraph.nodes,
+        currentGraph.nodes,
+        ['id']
+    )
+
+    return {
+        diffGraph: new VisGraph(nodeDifference, edgeDifference),
+        intersectionGraph: new VisGraph(nodeIntersection, edgeIntersection)
+    }
+
 }
 
 
 export function extractImplementationManifests(rdfaAbsolutePath: string, fileType: string) {
 
     let rdfGraph = getRdfGraph(rdfaAbsolutePath, fileType)
-    // return rdfGraph
     const implementationManifests: ImplementationManifest[] = rdfGraph.statementsMatching(undefined, hasImplementationManifestUri, undefined).map((s) => toImplementationManifest(s.object, rdfGraph))
-    
     return implementationManifests
-
-    // debugger
 }

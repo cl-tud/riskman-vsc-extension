@@ -5,10 +5,6 @@ import * as path from 'path'
 import * as rdfReader from './rdfReader'
 
 
-// import {  } from 'rdflib/lib/types'
-// import { ObjectType } from 'rdflib/lib/types'
-
-
 
 
 export class ImplementationManifestTreeDataProvider implements vscode.TreeDataProvider<ImplementationManifest> {
@@ -86,13 +82,6 @@ export class ImplementationManifestTreeDataProvider implements vscode.TreeDataPr
 
 
 }
-
-// export enum TreeItemType {
-//     CR,
-//     SDA,
-//     IM
-// }
-
 
 
 
