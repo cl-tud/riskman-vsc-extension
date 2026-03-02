@@ -1,8 +1,8 @@
 {
   "name": "riskman",
   "displayName": "Riskman",
-  "description": "Conveniently verify whether all implementation manifests have been adressed.",
-  "version": "0.0.1",
+  "description": "A VSCode extension for visualizing, reasoning over, and validating RDF-based risk management documents conforming to the Riskman ontology & shapes.",
+  "version": "0.0.2",
   "publisher": "gorczyca",
   "repository": {
     "type": "git",
