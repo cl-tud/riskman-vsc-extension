@@ -2,7 +2,7 @@
   "name": "riskman",
   "displayName": "Riskman",
   "description": "A VSCode extension for visualizing, reasoning over, and validating RDF-based risk management documents conforming to the Riskman ontology & shapes.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "gorczyca",
   "repository": {
     "type": "git",
